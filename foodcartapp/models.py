@@ -125,14 +125,15 @@ class RestaurantMenuItem(models.Model):
 
 
 class OrderElements(models.Model):
-    product = models.ForeignKey(Product, verbose_name='Заказ', related_name='order_elements', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, verbose_name='Продукт', related_name='order_elements',
+                                on_delete=models.CASCADE)
     quantity = models.IntegerField('Количество', default=1)
 
     class Meta:
         db_table = 'order_elements'
 
     def __str__(self):
-        return '%s %s ' % (self.product, self.quantity)
+        return '%s - %s шт. ' % (self.product, self.quantity)
 
 
 class Order(models.Model):
