@@ -137,14 +137,14 @@ class OrderElements(models.Model):
 
 
 class Order(models.Model):
-    client_name = models.CharField('Имя клиента', max_length=50, blank=False)
-    client_surname = models.CharField('Фамилия клиента', max_length=50, blank=False)
-    client_phone = PhoneNumberField(region='RU', blank=False)
-    client_address = models.CharField('Андрес доставки', max_length=100, blank=False)
-    order_elements = models.ManyToManyField(OrderElements, verbose_name='Элементы заказа', related_name='order')
+    firstname = models.CharField('Имя клиента', max_length=50, blank=False)
+    lastname = models.CharField('Фамилия клиента', max_length=50, blank=False)
+    phonenumber = PhoneNumberField(region='RU', blank=False)
+    address = models.CharField('Андрес доставки', max_length=100, blank=False)
+    products = models.ManyToManyField(OrderElements, verbose_name='Элементы заказа', related_name='order')
 
     class Meta:
         db_table = 'orders'
 
     def __str__(self):
-        return '%s ' % self.client_name
+        return '%s ' % self.firstname
