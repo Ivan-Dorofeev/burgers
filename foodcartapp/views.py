@@ -4,7 +4,7 @@ import traceback
 from django.http import JsonResponse
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.fields import ListField
 from rest_framework.parsers import JSONParser
@@ -67,7 +67,7 @@ def product_list_api(request):
     })
 
 
-class DeSerializer(ModelSerializer):
+class OrderDeSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = ['firstname', 'lastname', 'phonenumber', 'address']
@@ -88,6 +88,25 @@ class DeSerializer(ModelSerializer):
         return values
 
 
+class OrderSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)
+    firstname = serializers.CharField(required=True, allow_blank=True, max_length=100)
+    lastname = serializers.CharField(required=True, allow_blank=True, max_length=100)
+    phonenumber = serializers.CharField(required=True)
+    address = serializers.CharField(required=True, allow_blank=True, max_length=100)
+
+    def create(self, validated_data):
+        return Order.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.id = validated_data.get('id', instance.title)
+        instance.firstname = validated_data.get('firstname', instance.title)
+        instance.lastname = validated_data.get('lastname', instance.code)
+        instance.phonenumber = validated_data.get('phonenumber', instance.linenos)
+        instance.address = validated_data.get('address', instance.language)
+        instance.save()
+
+
 @api_view(['POST'])
 def register_order(request):
     try:
@@ -95,10 +114,10 @@ def register_order(request):
         print('orders = ', get_orders)
 
         """Десериализация"""
-        serializer = DeSerializer(data=get_orders)
-        serializer.is_valid(raise_exception=True)
-        print('serializer = ', serializer)
-        print('serializer.data = ', serializer.data)
+        deserializer = OrderDeSerializer(data=get_orders)
+        deserializer.is_valid(raise_exception=True)
+        print('deserializer = ', deserializer)
+        print('deserializer.data = ', deserializer.data)
 
         """Запись в БД"""
         order = Order.objects.create(
@@ -108,6 +127,7 @@ def register_order(request):
             address=get_orders['address'],
         )
         print('order = ', order)
+        print('order.id = ', order.id)
         for product_element in get_orders['products']:
             product_by_id = Product.objects.get(id=int(product_element['product']))
             product_quantity = product_element['quantity']
@@ -116,6 +136,14 @@ def register_order(request):
             print('new_product = ', new_product)
 
             order.products.add(new_product)
+
+        deserializered_order = deserializer.data
+        deserializered_order['id'] = order.id
+
+        """Сериализация"""
+        serializer = OrderSerializer(data=deserializered_order)
+        serializer.is_valid(raise_exception=True)
+        print('serializer.data =', serializer.data)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
