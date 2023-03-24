@@ -7,8 +7,9 @@ from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import status
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.fields import ListField
+from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError, Serializer, CharField, ModelSerializer
+from rest_framework.serializers import ValidationError, Serializer, ModelSerializer
 from rest_framework.renderers import JSONRenderer
 
 from .models import Product, Order, OrderElements
@@ -66,10 +67,10 @@ def product_list_api(request):
     })
 
 
-class ApplicationSerializer(ModelSerializer):
+class DeSerializer(ModelSerializer):
     class Meta:
         model = Order
-        fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+        fields = ['firstname', 'lastname', 'phonenumber', 'address']
 
     def validate_phonenumber(self, value):
         if not PhoneNumber.from_string(value).is_valid():
@@ -94,8 +95,10 @@ def register_order(request):
         print('orders = ', get_orders)
 
         """Десериализация"""
-        serializer = ApplicationSerializer(data=get_orders)
+        serializer = DeSerializer(data=get_orders)
         serializer.is_valid(raise_exception=True)
+        print('serializer = ', serializer)
+        print('serializer.data = ', serializer.data)
 
         """Запись в БД"""
         order = Order.objects.create(
@@ -112,8 +115,9 @@ def register_order(request):
             new_product = OrderElements.objects.create(product=product_by_id, quantity=product_quantity)
             print('new_product = ', new_product)
 
-            order.order_elements.add(new_product)
-        return Response()
+            order.products.add(new_product)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     except Exception as exc:
         print(traceback.format_exc())
