@@ -1,6 +1,9 @@
+import decimal
+
 from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
+from django.core.exceptions import ValidationError
 
 
 class Restaurant(models.Model):
@@ -124,6 +127,13 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+def validate_even(value):
+    if not isinstance(value, decimal.Decimal):
+        raise ValidationError(f'Не верный тип данных: {value}/ Верный пример: 1235.66')
+    elif value < 0:
+        raise ValidationError(f'Значение не может быть отрицательным: {value}')
+
+
 class Order(models.Model):
     firstname = models.CharField('Имя клиента', max_length=50, blank=False)
     lastname = models.CharField('Фамилия клиента', max_length=50, blank=False)
@@ -140,9 +150,12 @@ class Order(models.Model):
 class OrderElements(models.Model):
     order = models.ForeignKey(Order, verbose_name='Заказ', related_name='order_elements',
                               on_delete=models.CASCADE)
+
     product = models.ForeignKey(Product, verbose_name='Продукты', related_name='orders',
                                 on_delete=models.CASCADE)
     quantity = models.IntegerField('Количество', default=1)
+    coast = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[validate_even],
+                                max_digits=10000, blank=True, null=True)
 
     class Meta:
         db_table = 'order_elements'
