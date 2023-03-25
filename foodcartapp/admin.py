@@ -126,6 +126,6 @@ class OrderAdmin(admin.ModelAdmin):
         'phonenumber',
         'address',
     ]
-    # inlines = [
-    #     OrderElementsInline,
-    # ]
+    inlines = [
+        OrderElementsInline,
+    ]

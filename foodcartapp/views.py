@@ -128,14 +128,12 @@ def register_order(request):
         )
         print('order = ', order)
         print('order.id = ', order.id)
-        for product_element in get_orders['products']:
-            product_by_id = Product.objects.get(id=int(product_element['product']))
-            product_quantity = product_element['quantity']
+        for product in get_orders['products']:
+            product_by_id = Product.objects.get(id=int(product['product']))
+            product_quantity = product['quantity']
 
-            new_product = OrderElements.objects.create(product=product_by_id, quantity=product_quantity)
+            new_product = OrderElements.objects.create(order=order, product=product_by_id, quantity=product_quantity)
             print('new_product = ', new_product)
-
-            order.products.add(new_product)
 
         deserializered_order = deserializer.data
         deserializered_order['id'] = order.id

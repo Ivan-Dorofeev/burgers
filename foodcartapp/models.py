@@ -124,8 +124,23 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class Order(models.Model):
+    firstname = models.CharField('Имя клиента', max_length=50, blank=False)
+    lastname = models.CharField('Фамилия клиента', max_length=50, blank=False)
+    phonenumber = PhoneNumberField(region='RU', blank=False)
+    address = models.CharField('Андрес доставки', max_length=100, blank=False)
+
+    class Meta:
+        db_table = 'orders'
+
+    def __str__(self):
+        return '%s ' % self.firstname
+
+
 class OrderElements(models.Model):
-    product = models.ForeignKey(Product, verbose_name='Продукт', related_name='order_elements',
+    order = models.ForeignKey(Order, verbose_name='Заказ', related_name='order_elements',
+                              on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, verbose_name='Продукты', related_name='orders',
                                 on_delete=models.CASCADE)
     quantity = models.IntegerField('Количество', default=1)
 
@@ -134,17 +149,3 @@ class OrderElements(models.Model):
 
     def __str__(self):
         return '%s - %s шт. ' % (self.product, self.quantity)
-
-
-class Order(models.Model):
-    firstname = models.CharField('Имя клиента', max_length=50, blank=False)
-    lastname = models.CharField('Фамилия клиента', max_length=50, blank=False)
-    phonenumber = PhoneNumberField(region='RU', blank=False)
-    address = models.CharField('Андрес доставки', max_length=100, blank=False)
-    products = models.ManyToManyField(OrderElements, verbose_name='Элементы заказа', related_name='order')
-
-    class Meta:
-        db_table = 'orders'
-
-    def __str__(self):
-        return '%s ' % self.firstname
