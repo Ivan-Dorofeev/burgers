@@ -1,6 +1,7 @@
 import json
 import traceback
 
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
@@ -108,40 +109,42 @@ class OrderSerializer(serializers.Serializer):
 
 
 @api_view(['POST'])
+# @transaction.atomic
 def register_order(request):
     try:
-        get_orders = request.data
-        print('orders = ', get_orders)
+        with transaction.atomic():
+            get_orders = request.data
+            print('orders = ', get_orders)
 
-        """Десериализация"""
-        deserializer = OrderDeSerializer(data=get_orders)
-        deserializer.is_valid(raise_exception=True)
-        print('deserializer = ', deserializer)
-        print('deserializer.data = ', deserializer.data)
+            """Десериализация"""
+            deserializer = OrderDeSerializer(data=get_orders)
+            deserializer.is_valid(raise_exception=True)
+            print('deserializer = ', deserializer)
+            print('deserializer.data = ', deserializer.data)
 
-        """Запись в БД"""
-        order = Order.objects.create(
-            firstname=get_orders['firstname'],
-            lastname=get_orders['lastname'],
-            phonenumber=get_orders['phonenumber'],
-            address=get_orders['address'],
-        )
-        print('order = ', order)
-        print('order.id = ', order.id)
-        for product in get_orders['products']:
-            product_by_id = Product.objects.get(id=int(product['product']))
-            product_quantity = product['quantity']
+            """Запись в БД"""
+            order = Order.objects.create(
+                firstname=get_orders['firstname'],
+                lastname=get_orders['lastname'],
+                phonenumber=get_orders['phonenumber'],
+                address=get_orders['address'],
+            )
+            print('order = ', order)
+            print('order.id = ', order.id)
+            for product in get_orders['products']:
+                product_by_id = Product.objects.get(id=int(product['product']))
+                product_quantity = product['quantity']
 
-            new_product = OrderElements.objects.create(order=order, product=product_by_id, quantity=product_quantity)
-            print('new_product = ', new_product)
+                new_product = OrderElements.objects.create(order=order, product=product_by_id, quantity=product_quantity)
+                print('new_product = ', new_product)
 
-        deserializered_order = deserializer.data
-        deserializered_order['id'] = order.id
+            deserializered_order = deserializer.data
+            deserializered_order['id'] = order.id
 
-        """Сериализация"""
-        serializer = OrderSerializer(data=deserializered_order)
-        serializer.is_valid(raise_exception=True)
-        print('serializer.data =', serializer.data)
+            """Сериализация"""
+            serializer = OrderSerializer(data=deserializered_order)
+            serializer.is_valid(raise_exception=True)
+            print('serializer.data =', serializer.data)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
