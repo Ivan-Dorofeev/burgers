@@ -140,6 +140,12 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(region='RU', blank=False)
     address = models.CharField('Андрес доставки', max_length=100, blank=False)
 
+    class OrderChoise(models.TextChoices):
+        NOT_READY = 'Не обработанный'
+        READY = 'Обработан менеджером'
+
+    order_status = models.CharField(max_length=20, choices=OrderChoise.choices, default=OrderChoise.NOT_READY)
+
     class Meta:
         db_table = 'orders'
 
