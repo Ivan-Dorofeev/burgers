@@ -153,7 +153,7 @@ class Order(models.Model):
     register_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
     called_at = models.DateTimeField('Время уточнения заказа', blank=True, null=True)
     delivered_at = models.DateTimeField('Время доставки заказа', blank=True, null=True)
-    payment = models.CharField(max_length=10, choices=PaymentChoise.choices, default=PaymentChoise.CASH)
+    payment = models.CharField(max_length=10, choices=PaymentChoise.choices, default=PaymentChoise.CASH, db_index=True)
 
     class Meta:
         db_table = 'orders'
