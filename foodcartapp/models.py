@@ -146,6 +146,9 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(region='RU', blank=False)
     address = models.CharField('Андрес доставки', max_length=100, blank=False)
     comments = models.CharField('Комментарий к заказу', max_length=300, blank=True, null=True)
+    register_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
+    called_at = models.DateTimeField('Время уточнения заказа', blank=True, null=True)
+    delivered_at = models.DateTimeField('Время доставки заказа', blank=True, null=True)
 
     class Meta:
         db_table = 'orders'
