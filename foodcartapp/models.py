@@ -155,6 +155,9 @@ class Order(models.Model):
     delivered_at = models.DateTimeField('Время доставки заказа', blank=True, null=True)
     payment = models.CharField(max_length=10, choices=PaymentChoise.choices, default=PaymentChoise.CASH, db_index=True)
 
+    restaurant_to_cooking = models.ForeignKey(Restaurant, verbose_name='Будет готовить ресторан', related_name='order',
+                                              on_delete=models.CASCADE, blank=True, null=True)
+
     class Meta:
         db_table = 'orders'
 

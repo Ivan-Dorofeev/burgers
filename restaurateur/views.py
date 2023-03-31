@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from django import forms
 from django.db import transaction
 from django.db.models import F, Sum
@@ -8,7 +10,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, Order, OrderElements
+from foodcartapp.models import Product, Restaurant, Order, OrderElements, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -94,6 +96,34 @@ def view_restaurants(request):
 def view_orders(request):
     order_items = Order.objects.prefetch_related('order_elements').annotate(
         coast=Sum(F('order_elements__quantity') * F('order_elements__product__price')))
+
+    all_restaurants_menu = RestaurantMenuItem.objects.all()
+    all_orders = OrderElements.objects.all()
+
+    products_by_order = {}
+    for order in all_orders:
+        # print(order.order.id, order.product)
+        if order.order.id in products_by_order.keys():
+            products_by_order[order.order.id].append(order.product)
+        else:
+            products_by_order[order.order.id] = [order.product]
+
+    rest_by_products = {}
+    for restaurant in all_restaurants_menu:
+        if restaurant.restaurant in rest_by_products.keys():
+            rest_by_products[restaurant.restaurant].append(restaurant.product)
+        else:
+            rest_by_products[restaurant.restaurant] = [restaurant.product]
+
+    rest_can_cook_by_order = {}
+    for id, i in products_by_order.items():
+        for rest, j in rest_by_products.items():
+            if set(i).issubset(j):
+                if id in rest_can_cook_by_order.keys():
+                    rest_can_cook_by_order[id].append(rest)
+                else:
+                    rest_can_cook_by_order[id] = [rest]
     return render(request, template_name='order_items.html', context={
-        'order_items': order_items
+        'order_items': order_items,
+        'rest_can_cook_by_order': rest_can_cook_by_order,
     })

@@ -20,6 +20,7 @@
       <th>Телефон</th>
       <th>Адрес доставки</th>
       <th>Комментарий</th>
+      <th>Ресторан</th>
       <th>Правки заказа</th>
     </tr>
 
@@ -32,11 +33,27 @@
         <td>{{ item.firstname }} {{ item.lastname }}</td>
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
-        {% if item.comments %}
-          <td>{{ item.comments }}</td>
-        {% else %}
-          <td> </td>
-        {% endif %}
+        {% if item.comments %}<td>{{ item.comments }}</td>{% else %}<td></td>{% endif %}
+
+        {% for order_id, restaurants  in rest_can_cook_by_order.items %}
+          {% if order_id == item.id %}
+            {% if item.order_status != 'Не обработанный' %}
+              <td>Готовит {{ item.restaurant_to_cooking }}</td>
+            {% else %}
+              <td>
+                <details>
+                  <summary>Могут приготовить</summary>
+                    {% for rest in restaurants %}
+                      <ul>
+                        <li> {{ rest }} </li>
+                      </ul>
+                    {% endfor %}
+                </details>
+              </td>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
         <td><a href="{% url "admin:foodcartapp_order_change" object_id=item.id %}?next= {{ request.get_full_path|urlencode }}">Редактировать</a></td>
       </tr>
     {% endfor %}
