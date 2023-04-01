@@ -1,4 +1,3 @@
-import json
 import traceback
 
 from django.db import transaction
@@ -6,12 +5,9 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import status, serializers
-from rest_framework.decorators import api_view, renderer_classes
-from rest_framework.fields import ListField
-from rest_framework.parsers import JSONParser
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError, Serializer, ModelSerializer
-from rest_framework.renderers import JSONRenderer
+from rest_framework.serializers import ValidationError, ModelSerializer
 
 from .models import Product, Order, OrderElements
 
@@ -114,13 +110,10 @@ def register_order(request):
     try:
         with transaction.atomic():
             get_orders = request.data
-            print('orders = ', get_orders)
 
             """Десериализация"""
             deserializer = OrderDeSerializer(data=get_orders)
             deserializer.is_valid(raise_exception=True)
-            print('deserializer = ', deserializer)
-            print('deserializer.data = ', deserializer.data)
 
             """Запись в БД"""
             order = Order.objects.create(
@@ -129,14 +122,11 @@ def register_order(request):
                 phonenumber=get_orders['phonenumber'],
                 address=get_orders['address'],
             )
-            print('order = ', order)
-            print('order.id = ', order.id)
             for product in get_orders['products']:
                 product_by_id = Product.objects.get(id=int(product['product']))
                 product_quantity = product['quantity']
 
                 new_product = OrderElements.objects.create(order=order, product=product_by_id, quantity=product_quantity)
-                print('new_product = ', new_product)
 
             deserializered_order = deserializer.data
             deserializered_order['id'] = order.id
@@ -144,7 +134,6 @@ def register_order(request):
             """Сериализация"""
             serializer = OrderSerializer(data=deserializered_order)
             serializer.is_valid(raise_exception=True)
-            print('serializer.data =', serializer.data)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

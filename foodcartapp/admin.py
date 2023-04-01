@@ -1,7 +1,5 @@
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
-from django.http import HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.templatetags.static import static
 from django.utils.html import format_html
@@ -50,8 +48,6 @@ class ProductAdmin(admin.ModelAdmin):
         'category',
     ]
     search_fields = [
-        # FIXME SQLite can not convert letter case for cyrillic words properly, so search will be buggy.
-        # Migration to PostgreSQL is necessary
         'name',
         'category__name',
     ]
