@@ -1,9 +1,8 @@
 import decimal
 
 from django.db import models
-from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
-from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 
 
 class Restaurant(models.Model):
@@ -127,13 +126,6 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-def validate_even(value):
-    if not isinstance(value, decimal.Decimal):
-        raise ValidationError(f'Не верный тип данных: {value}/ Верный пример: 1235.66')
-    elif value < 0:
-        raise ValidationError(f'Значение не может быть отрицательным: {value}')
-
-
 class Order(models.Model):
     class OrderChoise(models.TextChoices):
         NOT_READY = 'Не обработанный'
@@ -145,17 +137,17 @@ class Order(models.Model):
 
     order_status = models.CharField(max_length=20, choices=OrderChoise.choices, default=OrderChoise.NOT_READY,
                                     db_index=True)
-    firstname = models.CharField('Имя клиента', max_length=50, blank=False)
-    lastname = models.CharField('Фамилия клиента', max_length=50, blank=False)
-    phonenumber = PhoneNumberField(region='RU', blank=False)
+    firstname = models.CharField('Имя клиента', max_length=50)
+    lastname = models.CharField('Фамилия клиента', max_length=50)
+    phonenumber = PhoneNumberField(region='RU')
     address = models.CharField('Андрес доставки', max_length=100, blank=False)
-    comments = models.CharField('Комментарий к заказу', max_length=300, blank=True, null=True)
-    register_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
+    comments = models.TextField('Комментарий к заказу', max_length=300, blank=True)
+    order_register_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
     called_at = models.DateTimeField('Время уточнения заказа', blank=True, null=True)
     delivered_at = models.DateTimeField('Время доставки заказа', blank=True, null=True)
-    payment = models.CharField(max_length=10, choices=PaymentChoise.choices, default=PaymentChoise.CASH, db_index=True)
+    payment = models.CharField(max_length=10, choices=PaymentChoise.choices, db_index=True)
 
-    restaurant_to_cooking = models.ForeignKey(Restaurant, verbose_name='Будет готовить ресторан', related_name='order',
+    restaurant_that_cooks = models.ForeignKey(Restaurant, verbose_name='Будет готовить ресторан', related_name='order',
                                               on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
@@ -171,9 +163,9 @@ class OrderElements(models.Model):
 
     product = models.ForeignKey(Product, verbose_name='Продукты', related_name='orders',
                                 on_delete=models.CASCADE)
-    quantity = models.IntegerField('Количество', default=1)
-    coast = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[validate_even],
-                                max_digits=10000, blank=True, null=True)
+    quantity = models.IntegerField('Количество', max_length=1)
+    cost = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[MinValueValidator(0)],
+                               max_digits=10000)
 
     class Meta:
         db_table = 'order_elements'

@@ -38,7 +38,7 @@
         {% for order_id, restaurants  in rest_can_cook_by_order.items %}
           {% if order_id == item.id %}
             {% if item.order_status != 'Не обработанный' %}
-              <td>Готовит {{ item.restaurant_to_cooking }}</td>
+              <td>Готовит {{ item.restaurant_that_cooks }}</td>
             {% else %}
               <td>
                 <details>

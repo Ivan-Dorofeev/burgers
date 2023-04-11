@@ -3,17 +3,15 @@ import traceback
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
-from phonenumber_field.phonenumber import PhoneNumber
-from rest_framework import status, serializers
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError, ModelSerializer
 
 from .models import Product, Order, OrderElements
+from .serializers import OrderDeSerializer, OrderSerializer
 
 
 def banners_list_api(request):
-    # FIXME move data to db?
     return JsonResponse([
         {
             'title': 'Burger',
@@ -64,55 +62,14 @@ def product_list_api(request):
     })
 
 
-class OrderDeSerializer(ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['firstname', 'lastname', 'phonenumber', 'address']
-
-    def validate_phonenumber(self, value):
-        if not PhoneNumber.from_string(value).is_valid():
-            raise ValidationError('Введен некорректный номер телефона.')
-        return value
-
-    def validate_products(self, values):
-        if not values:
-            raise ValidationError(f'Этот список не может быть пустым.')
-
-        order_product_ids = Product.objects.all()
-        for value in values:
-            if not value in order_product_ids:
-                raise ValidationError(f'Недопустимый первичный ключ {value["product"]}')
-        return values
-
-
-class OrderSerializer(serializers.Serializer):
-    id = serializers.IntegerField(min_value=1)
-    firstname = serializers.CharField(required=True, allow_blank=True, max_length=100)
-    lastname = serializers.CharField(required=True, allow_blank=True, max_length=100)
-    phonenumber = serializers.CharField(required=True)
-    address = serializers.CharField(required=True, allow_blank=True, max_length=100)
-
-    def create(self, validated_data):
-        return Order.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        instance.id = validated_data.get('id', instance.title)
-        instance.firstname = validated_data.get('firstname', instance.title)
-        instance.lastname = validated_data.get('lastname', instance.code)
-        instance.phonenumber = validated_data.get('phonenumber', instance.linenos)
-        instance.address = validated_data.get('address', instance.language)
-        instance.save()
-
-
 @api_view(['POST'])
-# @transaction.atomic
 def register_order(request):
     try:
         with transaction.atomic():
             get_orders = request.data
 
             """Десериализация"""
-            deserializer = OrderDeSerializer(data=get_orders)
+            deserializer = OrderSerializer(data=get_orders)
             deserializer.is_valid(raise_exception=True)
 
             """Запись в БД"""
@@ -126,7 +83,8 @@ def register_order(request):
                 product_by_id = Product.objects.get(id=int(product['product']))
                 product_quantity = product['quantity']
 
-                new_product = OrderElements.objects.create(order=order, product=product_by_id, quantity=product_quantity)
+                OrderElements.objects.create(order=order, product=product_by_id,
+                                                           quantity=product_quantity)
 
             deserializered_order = deserializer.data
             deserializered_order['id'] = order.id
@@ -135,7 +93,7 @@ def register_order(request):
             serializer = OrderSerializer(data=deserializered_order)
             serializer.is_valid(raise_exception=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     except Exception as exc:
         print(traceback.format_exc())
