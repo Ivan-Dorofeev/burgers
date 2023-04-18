@@ -1,32 +1,6 @@
 from django.db import transaction
-from rest_framework.serializers import ModelSerializer
-
-from foodcartapp.models import Order, Product
-
-from rest_framework.serializers import ValidationError, ModelSerializer
-from phonenumber_field.phonenumber import PhoneNumber
+from foodcartapp.models import Order, Product, OrderElements
 from rest_framework import serializers
-
-
-# class OrderDeSerializer(ModelSerializer):
-#     class Meta:
-#         model = Order
-#         fields = ['firstname', 'lastname', 'phonenumber', 'address']
-#
-#     def validate_phonenumber(self, value):
-#         if not PhoneNumber.from_string(value).is_valid():
-#             raise ValidationError('Введен некорректный номер телефона.')
-#         return value
-#
-#     def validate_products(self, values):
-#         if not values:
-#             raise ValidationError(f'Этот список не может быть пустым.')
-#
-#         order_product_ids = Product.objects.all()
-#         for value in values:
-#             if not value in order_product_ids:
-#                 raise ValidationError(f'Недопустимый первичный ключ {value["product"]}')
-#         return values
 
 
 class OrderSerializer(serializers.Serializer):
@@ -38,7 +12,25 @@ class OrderSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        return Order.objects.create(**validated_data)
+        print('************* Запуск метода CREATE')
+        print('validated_data = ', validated_data)
+
+        order = Order.objects.create(
+            firstname=validated_data['firstname'],
+            lastname=validated_data['lastname'],
+            phonenumber=validated_data['phonenumber'],
+            address=validated_data['address'],
+        )
+        print('order = ', order)
+
+        for product in validated_data['products']:
+            product_by_id = Product.objects.get(id=int(product['product']))
+            product_quantity = product['quantity']
+
+            OrderElements.objects.create(order=order, product=product_by_id,
+                                         quantity=product_quantity)
+        print('************* Окончание метода CREATE')
+        return order
 
     def update(self, instance, validated_data):
         instance.id = validated_data.get('id', instance.title)

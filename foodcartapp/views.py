@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Product, Order, OrderElements
-from .serializers import OrderDeSerializer, OrderSerializer
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -64,37 +64,34 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    try:
-        with transaction.atomic():
-            get_orders = request.data
+    with transaction.atomic():
+        get_orders = request.data
 
-            """Десериализация"""
-            deserializer = OrderSerializer(data=get_orders)
-            deserializer.is_valid(raise_exception=True)
+        """Десериализация"""
+        deserializer = OrderSerializer(data=get_orders)
+        deserializer.is_valid(raise_exception=True)
 
-            """Запись в БД"""
-            order = Order.objects.create(
-                firstname=get_orders['firstname'],
-                lastname=get_orders['lastname'],
-                phonenumber=get_orders['phonenumber'],
-                address=get_orders['address'],
-            )
-            for product in get_orders['products']:
-                product_by_id = Product.objects.get(id=int(product['product']))
-                product_quantity = product['quantity']
+        """Запись в БД"""
+        order = OrderSerializer.create(get_orders)
 
-                OrderElements.objects.create(order=order, product=product_by_id,
-                                                           quantity=product_quantity)
+        # order = Order.objects.create(
+        #     firstname=get_orders['firstname'],
+        #     lastname=get_orders['lastname'],
+        #     phonenumber=get_orders['phonenumber'],
+        #     address=get_orders['address'],
+        # )
+        # for product in validated_data['products']:
+        #     product_by_id = Product.objects.get(id=int(product['product']))
+        #     product_quantity = product['quantity']
+        #
+        #     OrderElements.objects.create(order=order, product=product_by_id,
+        #                                  quantity=product_quantity)
 
-            deserializered_order = deserializer.data
-            deserializered_order['id'] = order.id
+        deserializered_order = deserializer.data
+        deserializered_order['id'] = order.id
 
-            """Сериализация"""
-            serializer = OrderSerializer(data=deserializered_order)
-            serializer.is_valid(raise_exception=True)
+        """Сериализация"""
+        serializer = OrderSerializer(data=deserializered_order)
+        serializer.is_valid(raise_exception=True)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    except Exception as exc:
-        print(traceback.format_exc())
-        return Response(f'error: {exc}', status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
