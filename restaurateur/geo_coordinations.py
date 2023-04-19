@@ -1,14 +1,14 @@
 import requests
 from geopy.distance import lonlat, distance
 from geo_places.models import Address
-from star_burger.settings import geo_yandex_api_key
+from star_burger.settings import GEO_YANDEX_API_KEY
 
 
 def fetch_coordinations(address):
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
         "geocode": address,
-        "apikey": geo_yandex_api_key,
+        "apikey": GEO_YANDEX_API_KEY,
         "format": "json",
     })
     response.raise_for_status()

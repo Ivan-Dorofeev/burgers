@@ -140,9 +140,9 @@ class Order(models.Model):
     firstname = models.CharField('Имя клиента', max_length=50)
     lastname = models.CharField('Фамилия клиента', max_length=50)
     phonenumber = PhoneNumberField(region='RU')
-    address = models.CharField('Андрес доставки', max_length=100, blank=False)
+    address = models.CharField('Андрес доставки', max_length=100)
     comments = models.TextField('Комментарий к заказу', max_length=300, blank=True)
-    order_register_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
+    order_registered_at = models.DateTimeField('Время регистрации заказа', auto_created=True, db_index=True)
     called_at = models.DateTimeField('Время уточнения заказа', blank=True, null=True)
     delivered_at = models.DateTimeField('Время доставки заказа', blank=True, null=True)
     payment = models.CharField(max_length=10, choices=PaymentChoise.choices, db_index=True)
@@ -163,9 +163,8 @@ class OrderElements(models.Model):
 
     product = models.ForeignKey(Product, verbose_name='Продукты', related_name='orders',
                                 on_delete=models.CASCADE)
-    quantity = models.IntegerField('Количество', max_length=1)
-    cost = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[MinValueValidator(0)],
-                               max_digits=10000)
+    quantity = models.IntegerField('Количество', validators=[MinValueValidator(1)])
+    cost = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[MinValueValidator(limit_value=0)], max_digits=10000)
 
     class Meta:
         db_table = 'order_elements'

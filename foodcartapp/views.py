@@ -74,19 +74,6 @@ def register_order(request):
         """Запись в БД"""
         order = OrderSerializer.create(get_orders)
 
-        # order = Order.objects.create(
-        #     firstname=get_orders['firstname'],
-        #     lastname=get_orders['lastname'],
-        #     phonenumber=get_orders['phonenumber'],
-        #     address=get_orders['address'],
-        # )
-        # for product in validated_data['products']:
-        #     product_by_id = Product.objects.get(id=int(product['product']))
-        #     product_quantity = product['quantity']
-        #
-        #     OrderElements.objects.create(order=order, product=product_by_id,
-        #                                  quantity=product_quantity)
-
         deserializered_order = deserializer.data
         deserializered_order['id'] = order.id
 
