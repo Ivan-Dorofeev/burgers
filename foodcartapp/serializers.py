@@ -26,15 +26,8 @@ class OrderSerializer(serializers.Serializer):
         bulk = []
         for i in product_by_id_and_product_quantity:
             bulk.append(OrderElements(order=order, product=i[0], quantity=i[1]))
-        print('********************** bulk = ', bulk)
         OrderElements.objects.bulk_create(bulk)
 
-        # for product in validated_data['products']:
-        #     product_by_id = Product.objects.get(id=int(product['product']))
-        #     product_quantity = product['quantity']
-        #
-        #     OrderElements.objects.create(order=order, product=product_by_id,
-        #                                  quantity=product_quantity)
         return order
 
     def update(self, instance, validated_data):

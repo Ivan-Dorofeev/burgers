@@ -164,7 +164,8 @@ class OrderElements(models.Model):
     product = models.ForeignKey(Product, verbose_name='Продукты', related_name='orders',
                                 on_delete=models.CASCADE)
     quantity = models.IntegerField('Количество', validators=[MinValueValidator(1)])
-    cost = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[MinValueValidator(limit_value=0)], max_digits=10000)
+    cost = models.DecimalField('Стоимость заказа', decimal_places=2, validators=[MinValueValidator(limit_value=0)],
+                               max_digits=4)
 
     class Meta:
         db_table = 'order_elements'
